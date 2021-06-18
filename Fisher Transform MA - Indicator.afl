@@ -1,0 +1,71 @@
+_SECTION_BEGIN("Fisher Transform Indicator");
+SetChartBkGradientFill( ParamColor("BgTop", colorDarkOliveGreen),ParamColor("BgBottom", colorDarkGrey));
+
+// Ehlers formulas
+// from Ehlers, John F. Cybernetic Analysis for Stocks and Futures. Wiley. 2004. 
+// Chapter 1, p. 1. Code on p. 7.
+
+// Fisher Transform function calculation
+function Normalize(array, arraylen)
+// Figure 1.7 on p. 7
+{
+  MaxH = HHV(array, arraylen);
+  MinL = LLV(array, arraylen);
+  Value1[0] = array[0];  // Initialize as array
+
+  for(i = 1; i < BarCount; i++)
+  {
+     Value1[i]=.5*2*((array[i]-MinL[i])/IIf(MaxH[i]-MinL[i]==0,1,MaxH[i]-MinL[i])-.5)+.5*Value1[i-1];
+     if (Value1[i] > .9999) Value1[i] = .9999;
+     if (Value1[i] < -.9999) Value1[i] = -.9999;
+  }
+  return Value1;
+}
+
+function Fisher(array)
+// Figure 1.7 on p. 7
+{
+  F = array;
+  F = .25 * log((1+ array)/(1 - array)) + .5 * Ref(F, -1);
+  return F;
+}
+
+Med = (H+L)/2;
+
+// Fisher Transform signal plot
+F1 = Fisher(Normalize(Med, 10));
+p = Param("Per", 10, 1, 100, 1);
+n = p*(-1);
+F2 = (Ref(F1,n));
+F3 = MA(F1,29); //Default 29
+FS = MA(F1,7);
+//Plot(F2, "F2", colorAqua, styleLine);
+
+//Added this block for color coding the Fisher Transform Line
+t = Param("Trend Period", 7, 1, 100, 1);
+Trend = LinRegSlope(F1,t); // 7 is best suited for 1 min scalping. 12 was used in other systems
+TrendII = Ref(Trend,-1);
+
+fcolor = IIf(Trend > TrendII, colorLime, colorRed);
+
+Plot(F1, "Fisher Transform", fcolor, styleThick);
+Plot(F3, "F-MA", colorYellow, styleLine);
+Plot(FS, "F-S", colorPink, styleThick);
+PlotGrid(2, colorLightGrey);
+PlotGrid(-2, colorLightGrey);
+
+
+Buy     = Cross(F1, FS) ;
+Sell    = Cross(FS, F1) ;
+ 
+Buy     = ExRem(Buy, Sell);
+Sell    = ExRem(Sell, Buy);
+
+PlotShapes(IIf((Buy),shapeUpTriangle,shapeNone),colorBlue,0,Low,Offset=-15);
+PlotShapes(IIf((Sell),shapeDownTriangle,shapeNone),colorRed,0,High,Offset=-15);
+
+Plot(0,"",ParamColor("0-L",colorGrey40), ParamStyle("Zero Line Style",styleDashed));
+Plot(1,"",ParamColor("+1-L",colorWhite), ParamStyle("Zero Line Style",styleDashed));
+Plot(-1,"",ParamColor("-1-L",colorWhite), ParamStyle("Zero Line Style",styleDashed));
+
+_SECTION_END();
