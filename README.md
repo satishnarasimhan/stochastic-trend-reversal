@@ -41,3 +41,5 @@ Downsides / Risks
 ------------------
 1. Not all trades will be profitable. Position sizing and risk management is key to handling risk
 2. Instrument prices are not usually normally distributed, so there is a risk of unreliable signals
+
+![Screenshot](https://github.com/satishnarasimhan/stochastic-trend-reversal/blob/main/stochreversal.png)
